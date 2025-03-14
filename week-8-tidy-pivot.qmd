@@ -1,0 +1,198 @@
+---
+title: "Tidy Data"
+author: "Aida Aquino Arias"
+format: html
+---
+
+```{r}
+#| label: setup
+library(tidyverse)
+```
+
+
+```{r}
+#| label: create-toy-data
+
+# Toy data
+cases <- tribble(
+  ~Country, ~"2011", ~"2012", ~"2013",
+  "FR",    7000,    6900,    7000,
+  "DE",    5800,    6000,    6200,
+  "US",   15000,   14000,   13000
+)
+
+pollution <- tribble(
+  ~city, ~size, ~amount,
+  "New York", "large",      23,
+  "New York", "small",      14,
+  "London", "large",      22,
+  "London", "small",      16,
+  "Beijing", "large",     121,
+  "Beijing", "small",     121
+)
+
+names(who) <- stringr::str_replace(names(who), 
+                                   "newrel", 
+                                   "new_rel")
+```
+
+Run the code below to look at the tables from the presentation 
+
+```{r}
+table1
+table2
+table3
+table4a
+table4b
+table5
+```
+
+# tidyr
+
+
+## Your Turn 1
+
+On a sheet of paper, draw how the cases data set would look if it had the same values grouped into three columns: **country**, **year**, **n**
+
+```{r}
+cases |> 
+  pivot_longer(names_to = "year", 
+               values_to = "n", 
+               cols = 2:4)
+```
+
+
+
+## Your Turn 2
+Try the following codes - what do they do? (annotate them with a comment)
+
+```{r}
+#| label: pivot-tables
+cases |> 
+  pivot_longer(names_to = "year",
+               values_to = "n", 
+               cols = 2:4) # transforms columns 2 through 4 into a longer format, It becomes a new column named year and the values are placed in n
+
+cases |> 
+  pivot_longer(names_to = "year",
+               values_to = "n", 
+               cols = c("2011", "2012", "2013")) #transforming the specific years 2011,2012,2013 into a pivot longer. and the values are placed in n while the new column name will be year.
+
+cases |> 
+  pivot_longer(names_to = "year",
+               values_to = "n", 
+               cols = starts_with("201")) # the code specifically transforms anything starting with 201 into a pivot longer format, with the values in n and the column name being year.
+
+cases |> 
+  pivot_longer(names_to = "year",
+               values_to = "n", 
+               cols = -Country) # all columns except the country column would be transformed into a pivot longer format. The column names would be year and the values would be in n. WHile country remains the same.
+```
+
+
+
+## Your Turn 3
+
+Use `pivot_longer()` to reorganize `table4a` into three columns: **country**, **year**, and **cases**.
+
+```{r}
+#| label: piviot-fuction
+table4b|>
+  pivot_longer(-country, names_to = "year", values_to = "populations",
+               names_transform = list(year = as.integer))
+
+```
+
+
+## Your Turn 4
+
+On a sheet of paper, draw how this data set would look if it had the same values grouped into three columns: **city**, **large**, **small**
+
+
+
+
+## Your Turn 5
+
+Use `pivot_wider()` to reorganize `table2` into four columns: **country**, **year**, **cases**, and **population**.
+
+```{r}
+#| label: reorganize
+table2 |>
+  pivot_wider(names_from = type, values_from = count) |>
+  mutate(rate = cases/population*100000)
+```
+
+# who
+
+
+## Your Turn 6
+
+Gather the 5th through 60th columns of `who` into columns named `codes` and `n`.
+
+Then select just the `country`, `year`, `codes` and `n` variables.
+
+```{r}
+#| label: select-function
+who |>
+  pivot_longer(names_to = "codes", 
+               values_to = "n", 
+               cols = 5:60) |>
+  select(-iso2, -iso3)
+
+```
+
+
+
+Run the following code
+```{r}
+who |>
+  pivot_longer(names_to = "codes", 
+               values_to = "n", 
+               cols = 5:60) |>
+  select(-iso2, -iso3) |>
+  separate(col = codes, 
+           into = c("new", "type", "sexage"), 
+           sep = c(4, 7))
+```
+
+
+
+
+## Your Turn 7
+
+Separate the `sexage` column into `sex` and `age` columns.
+
+*(Hint: Be sure to remove each `_________` before running the code)*
+
+```{r}
+#| label: separate-function
+who |>
+  pivot_longer(names_to = "codes", 
+               values_to = "n", 
+               cols = 5:60) |>
+  select(-iso2, -iso3) |>
+ separate(col = codes, 
+          into = c("new", "type", "sexage"), 
+          sep = "_") |>
+  select(-new) |> 
+  separate(sexage, c("sex", "age"), sep = 1) |>
+  separate(age, c("age_lb", "age_ub"), sep = -2) |>
+  unite(col = "age_range", age_lb:age_ub, sep = "-") |>
+  mutate(ae_rangeg = if_else(age_range == "-65", "65+", age_range))
+```
+
+
+***
+
+# Take Aways
+
+Data comes in many formats but R prefers just one: _tidy data_.
+
+A data set is tidy if and only if:
+
+1. Every variable is in its own column
+2. Every observation is in its own row
+3. Every value is in its own cell (which follows from the above)
+
+What is a variable and an observation may depend on your immediate goal.
+
